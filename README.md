@@ -1,748 +1,135 @@
-Contribution: 2018-01-02 00:00
+# CanvasChess
+[Live Demo](https://robtaussig.com/chess/)
+
+HTML5 Canvas UI for chess.
+
+## Getting Started
+It does not depend on React, but as I personally use it within a React Component, I will demonstrate that implementation.
+
+```
+import React from 'react';
+import Game from './canvasChess/game';
+import debounce from 'lodash/debounce';
+
+export default class CanvasChess extends React.Component {
+  constructor(props) {
+    super(props);
+    this.canvas = React.createRef();
+    this.refreshBoard = this.refreshBoard.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handlePointerDown = this.handlePointerDown.bind(this);
+  }
+
+  componentDidMount() {
+    this.canvas.current.onselectstart = function () { return false; }; //Prevents selection of outside text when user double taps on canvas element
+    this.game = new Game(this.canvas.current, this.props.onMove);
+    this.game.updateBoard(this.props.board);
+    const debouncedResize = debounce(this.refreshBoard, 100);
+    window.addEventListener('resize', debouncedResize);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.board !== this.props.board) {
+      this.receiveBoardUpdate(this.props.board);
+    }
+    if (prevProps.legalMoves !== this.props.legalMoves) {
+      this.receiveLegalMoves(this.props.legalMoves);
+    }
+    if (prevProps.validPiecesToMove !== this.props.validPiecesToMove) {
+      this.receiveValidPiecesToMove(this.props.validPiecesToMove);
+    }
+  }
+
+  getCanvasWidth() {
+    return `${window.innerWidth}px`;
+  }
+
+  getCanvasHeight() {
+    return `${window.innerHeight}px`;
+  }
+
+  handlePointerDown(e) {
+    const target = e.target;
+    const { clientX, clientY } = e;
+    this.game.registerDragStart(clientX, clientY);
+  
+    const removeMouseMoveEventListener = () => {
+      target.removeEventListener('pointermove', this.handleMouseMove);
+      target.removeEventListener('pointerup', removeMouseMoveEventListener);
+      target.removeEventListener('pointerleave', removeMouseMoveEventListener);
+      this.game.registerDragEnd();
+    };
+  
+    target.addEventListener('pointerup', removeMouseMoveEventListener);
+    target.addEventListener('pointermove', this.handleMouseMove);
+    target.addEventListener('pointerleave', removeMouseMoveEventListener);
+  }
+
+  handleMouseMove(e) {
+    const { clientX, clientY } = e;
+  
+    this.game.registerDrag(clientX, clientY);
+  }
+
+  receiveBoardUpdate() {
+    this.game.updateBoard(this.props.board);
+  }
+
+  receiveLegalMoves(moves) {
+    this.game.updateLegalMoves(moves);
+  }
+
+  receiveValidPiecesToMove(pieces) {
+    this.game.updateValidPieces(pieces);
+  }
+
+  refreshBoard() {
+    this.forceUpdate(); //Clears canvas board
+    this.game = new Game(this.canvas.current, this.props.onMove);
+    this.game.updateBoard(this.props.board);
+    this.game.updateLegalMoves(this.props.legalMoves);
+    this.game.updateValidPieces(this.props.validPiecesToMove);
+  }
+
+  render() {
+    return (
+      <canvas
+        width={this.getCanvasWidth()}
+        height={this.getCanvasHeight()} 
+        ref={this.canvas} 
+        style={{ flex: 1 }}
+        onPointerDown={this.handlePointerDown}
+      />
+    );
+  }
+}
 
-Contribution: 2018-01-02 00:01
+```
 
-Contribution: 2018-01-02 00:02
+The game should be playable so long as the following 6 methods are used:
 
-Contribution: 2018-01-02 00:03
+### new Game(canvasElement, moveHandler)
+`moveHandler` is a callback that will be invoked when the user either drops a piece onto a valid square, or clicks on a valid target with a valid piece selected.
 
-Contribution: 2018-01-02 00:04
+### Game#updateBoard
+Canvas Chess will not automatically update itself when a user moves a piece. It will update the parent of this event, and it is up to the parent to determine whether to make the move or not. Calling Game#updateBoard (with the new board value) will update the board position. See [my chess engine](https://github.com/robtaussig/chess#Getting-Started) for information on board representation.
 
-Contribution: 2018-01-03 00:00
+### Game#registerDragStart
+Click management is handled by parent container. This should be called whenever the user clicks on the canvas element (and the parent container wishes for the canvas element to react to this action).
 
-Contribution: 2018-01-03 00:01
+### Game#registerDragEnd
+Should be called on mouseUp or touchEnd (or pointerUp to capture both).
 
-Contribution: 2018-01-03 00:02
+### Game#registerDrag
+Should be called while the user is 'dragging' over the canvas element.
 
-Contribution: 2018-01-03 00:03
+### Game#updateLegalMoves
+Providing this when available will allow canvasChess to indicate legal moves by highlighting squares based on the current selected piece.
 
-Contribution: 2018-01-03 00:04
+### Game#updateValidPieces
+Providing this when available will allow canvasChess to determine which pieces will trigger an onMove callback when dropped. Passing it an array of all pieces will allow user to drag and drop any piece.
 
-Contribution: 2018-01-03 00:05
+## Installing
+No dependencies.
 
-Contribution: 2018-01-03 00:06
-
-Contribution: 2018-01-04 00:00
-
-Contribution: 2018-01-04 00:01
-
-Contribution: 2018-01-04 00:02
-
-Contribution: 2018-01-04 00:03
-
-Contribution: 2018-01-04 00:04
-
-Contribution: 2018-01-04 00:05
-
-Contribution: 2018-01-04 00:06
-
-Contribution: 2018-01-05 00:00
-
-Contribution: 2018-01-05 00:01
-
-Contribution: 2018-01-05 00:02
-
-Contribution: 2018-01-05 00:03
-
-Contribution: 2018-01-05 00:04
-
-Contribution: 2018-01-05 00:05
-
-Contribution: 2018-01-05 00:06
-
-Contribution: 2018-01-05 00:07
-
-Contribution: 2018-01-08 00:00
-
-Contribution: 2018-01-08 00:01
-
-Contribution: 2018-01-08 00:02
-
-Contribution: 2018-01-09 00:00
-
-Contribution: 2018-01-09 00:01
-
-Contribution: 2018-01-09 00:02
-
-Contribution: 2018-01-10 00:00
-
-Contribution: 2018-01-12 00:00
-
-Contribution: 2018-01-12 00:01
-
-Contribution: 2018-01-12 00:02
-
-Contribution: 2018-01-12 00:03
-
-Contribution: 2018-01-12 00:04
-
-Contribution: 2018-01-12 00:05
-
-Contribution: 2018-01-12 00:06
-
-Contribution: 2018-01-12 00:07
-
-Contribution: 2018-01-12 00:08
-
-Contribution: 2018-01-15 00:00
-
-Contribution: 2018-01-15 00:01
-
-Contribution: 2018-01-15 00:02
-
-Contribution: 2018-01-15 00:03
-
-Contribution: 2018-01-16 00:00
-
-Contribution: 2018-01-16 00:01
-
-Contribution: 2018-01-19 00:00
-
-Contribution: 2018-01-19 00:01
-
-Contribution: 2018-01-19 00:02
-
-Contribution: 2018-01-19 00:03
-
-Contribution: 2018-01-19 00:04
-
-Contribution: 2018-01-19 00:05
-
-Contribution: 2018-01-19 00:06
-
-Contribution: 2018-01-19 00:07
-
-Contribution: 2018-01-19 00:08
-
-Contribution: 2018-01-19 00:09
-
-Contribution: 2018-01-23 00:00
-
-Contribution: 2018-01-23 00:01
-
-Contribution: 2018-01-25 00:00
-
-Contribution: 2018-01-26 00:00
-
-Contribution: 2018-01-26 00:01
-
-Contribution: 2018-01-26 00:02
-
-Contribution: 2018-01-26 00:03
-
-Contribution: 2018-01-26 00:04
-
-Contribution: 2018-01-29 00:00
-
-Contribution: 2018-01-29 00:01
-
-Contribution: 2018-01-29 00:02
-
-Contribution: 2018-01-29 00:03
-
-Contribution: 2018-01-29 00:04
-
-Contribution: 2018-01-29 00:05
-
-Contribution: 2018-01-29 00:06
-
-Contribution: 2018-01-29 00:07
-
-Contribution: 2018-01-31 00:00
-
-Contribution: 2018-01-31 00:01
-
-Contribution: 2018-01-31 00:02
-
-Contribution: 2018-01-31 00:03
-
-Contribution: 2018-01-31 00:04
-
-Contribution: 2018-01-31 00:05
-
-Contribution: 2018-02-01 00:00
-
-Contribution: 2018-02-01 00:01
-
-Contribution: 2018-02-01 00:02
-
-Contribution: 2018-02-01 00:03
-
-Contribution: 2018-02-01 00:04
-
-Contribution: 2018-02-01 00:05
-
-Contribution: 2018-02-01 00:06
-
-Contribution: 2018-02-01 00:07
-
-Contribution: 2018-02-01 00:08
-
-Contribution: 2018-02-05 00:00
-
-Contribution: 2018-02-05 00:01
-
-Contribution: 2018-02-05 00:02
-
-Contribution: 2018-02-05 00:03
-
-Contribution: 2018-02-05 00:04
-
-Contribution: 2018-02-05 00:05
-
-Contribution: 2018-02-05 00:06
-
-Contribution: 2018-02-05 00:07
-
-Contribution: 2018-02-05 00:08
-
-Contribution: 2018-02-06 00:00
-
-Contribution: 2018-02-06 00:01
-
-Contribution: 2018-02-06 00:02
-
-Contribution: 2018-02-07 00:00
-
-Contribution: 2018-02-07 00:01
-
-Contribution: 2018-02-07 00:02
-
-Contribution: 2018-02-09 00:00
-
-Contribution: 2018-02-09 00:01
-
-Contribution: 2018-02-09 00:02
-
-Contribution: 2018-02-09 00:03
-
-Contribution: 2018-02-09 00:04
-
-Contribution: 2018-02-09 00:05
-
-Contribution: 2018-02-09 00:06
-
-Contribution: 2018-02-09 00:07
-
-Contribution: 2018-02-09 00:08
-
-Contribution: 2018-02-12 00:00
-
-Contribution: 2018-02-12 00:01
-
-Contribution: 2018-02-12 00:02
-
-Contribution: 2018-02-12 00:03
-
-Contribution: 2018-02-12 00:04
-
-Contribution: 2018-02-12 00:05
-
-Contribution: 2018-02-12 00:06
-
-Contribution: 2018-02-12 00:07
-
-Contribution: 2018-02-12 00:08
-
-Contribution: 2018-02-12 00:09
-
-Contribution: 2018-02-13 00:00
-
-Contribution: 2018-02-13 00:01
-
-Contribution: 2018-02-13 00:02
-
-Contribution: 2018-02-13 00:03
-
-Contribution: 2018-02-13 00:04
-
-Contribution: 2018-02-13 00:05
-
-Contribution: 2018-02-13 00:06
-
-Contribution: 2018-02-14 00:00
-
-Contribution: 2018-02-14 00:01
-
-Contribution: 2018-02-14 00:02
-
-Contribution: 2018-02-14 00:03
-
-Contribution: 2018-02-16 00:00
-
-Contribution: 2018-02-16 00:01
-
-Contribution: 2018-02-16 00:02
-
-Contribution: 2018-02-16 00:03
-
-Contribution: 2018-02-16 00:04
-
-Contribution: 2018-02-16 00:05
-
-Contribution: 2018-02-16 00:06
-
-Contribution: 2018-02-16 00:07
-
-Contribution: 2018-02-19 00:00
-
-Contribution: 2018-02-19 00:01
-
-Contribution: 2018-02-19 00:02
-
-Contribution: 2018-02-19 00:03
-
-Contribution: 2018-02-19 00:04
-
-Contribution: 2018-02-19 00:05
-
-Contribution: 2018-02-19 00:06
-
-Contribution: 2018-02-23 00:00
-
-Contribution: 2018-02-23 00:01
-
-Contribution: 2018-02-23 00:02
-
-Contribution: 2018-02-23 00:03
-
-Contribution: 2018-02-23 00:04
-
-Contribution: 2018-02-23 00:05
-
-Contribution: 2018-02-23 00:06
-
-Contribution: 2018-02-23 00:07
-
-Contribution: 2018-02-23 00:08
-
-Contribution: 2018-02-26 00:00
-
-Contribution: 2018-02-26 00:01
-
-Contribution: 2018-02-26 00:02
-
-Contribution: 2018-02-26 00:03
-
-Contribution: 2018-02-26 00:04
-
-Contribution: 2018-02-26 00:05
-
-Contribution: 2018-02-26 00:06
-
-Contribution: 2018-02-27 00:00
-
-Contribution: 2018-02-27 00:01
-
-Contribution: 2018-02-27 00:02
-
-Contribution: 2018-02-27 00:03
-
-Contribution: 2018-02-28 00:00
-
-Contribution: 2018-02-28 00:01
-
-Contribution: 2018-02-28 00:02
-
-Contribution: 2018-03-02 00:00
-
-Contribution: 2018-03-02 00:01
-
-Contribution: 2018-03-02 00:02
-
-Contribution: 2018-03-02 00:03
-
-Contribution: 2018-03-02 00:04
-
-Contribution: 2018-03-02 00:05
-
-Contribution: 2018-03-02 00:06
-
-Contribution: 2018-03-02 00:07
-
-Contribution: 2018-03-02 00:08
-
-Contribution: 2018-03-02 00:09
-
-Contribution: 2018-03-05 00:00
-
-Contribution: 2018-03-07 00:00
-
-Contribution: 2018-03-07 00:01
-
-Contribution: 2018-03-07 00:02
-
-Contribution: 2018-03-07 00:03
-
-Contribution: 2018-03-07 00:04
-
-Contribution: 2018-03-07 00:05
-
-Contribution: 2018-03-07 00:06
-
-Contribution: 2018-03-07 00:07
-
-Contribution: 2018-03-07 00:08
-
-Contribution: 2018-03-08 00:00
-
-Contribution: 2018-03-08 00:01
-
-Contribution: 2018-03-08 00:02
-
-Contribution: 2018-03-08 00:03
-
-Contribution: 2018-03-08 00:04
-
-Contribution: 2018-03-08 00:05
-
-Contribution: 2018-03-08 00:06
-
-Contribution: 2018-03-08 00:07
-
-Contribution: 2018-03-08 00:08
-
-Contribution: 2018-03-08 00:09
-
-Contribution: 2018-03-09 00:00
-
-Contribution: 2018-03-09 00:01
-
-Contribution: 2018-03-09 00:02
-
-Contribution: 2018-03-09 00:03
-
-Contribution: 2018-03-09 00:04
-
-Contribution: 2018-03-09 00:05
-
-Contribution: 2018-03-12 00:00
-
-Contribution: 2018-03-12 00:01
-
-Contribution: 2018-03-12 00:02
-
-Contribution: 2018-03-12 00:03
-
-Contribution: 2018-03-12 00:04
-
-Contribution: 2018-03-12 00:05
-
-Contribution: 2018-03-12 00:06
-
-Contribution: 2018-03-12 00:07
-
-Contribution: 2018-03-12 00:08
-
-Contribution: 2018-03-13 00:00
-
-Contribution: 2018-03-14 00:00
-
-Contribution: 2018-03-15 00:00
-
-Contribution: 2018-03-16 00:00
-
-Contribution: 2018-03-16 00:01
-
-Contribution: 2018-03-16 00:02
-
-Contribution: 2018-03-16 00:03
-
-Contribution: 2018-03-16 00:04
-
-Contribution: 2018-03-16 00:05
-
-Contribution: 2018-03-16 00:06
-
-Contribution: 2018-03-16 00:07
-
-Contribution: 2018-03-16 00:08
-
-Contribution: 2018-03-20 00:00
-
-Contribution: 2018-03-20 00:01
-
-Contribution: 2018-03-20 00:02
-
-Contribution: 2018-03-20 00:03
-
-Contribution: 2018-03-20 00:04
-
-Contribution: 2018-03-21 00:00
-
-Contribution: 2018-03-21 00:01
-
-Contribution: 2018-03-21 00:02
-
-Contribution: 2018-03-22 00:00
-
-Contribution: 2018-03-22 00:01
-
-Contribution: 2018-03-22 00:02
-
-Contribution: 2018-03-22 00:03
-
-Contribution: 2018-03-22 00:04
-
-Contribution: 2018-03-23 00:00
-
-Contribution: 2018-03-23 00:01
-
-Contribution: 2018-03-23 00:02
-
-Contribution: 2018-03-23 00:03
-
-Contribution: 2018-03-23 00:04
-
-Contribution: 2018-03-23 00:05
-
-Contribution: 2018-03-23 00:06
-
-Contribution: 2018-03-26 00:00
-
-Contribution: 2018-03-26 00:01
-
-Contribution: 2018-03-26 00:02
-
-Contribution: 2018-03-26 00:03
-
-Contribution: 2018-03-26 00:04
-
-Contribution: 2018-03-26 00:05
-
-Contribution: 2018-03-26 00:06
-
-Contribution: 2018-03-26 00:07
-
-Contribution: 2018-03-27 00:00
-
-Contribution: 2018-03-27 00:01
-
-Contribution: 2018-03-27 00:02
-
-Contribution: 2018-03-27 00:03
-
-Contribution: 2018-03-27 00:04
-
-Contribution: 2018-03-27 00:05
-
-Contribution: 2018-03-27 00:06
-
-Contribution: 2018-03-29 00:00
-
-Contribution: 2018-03-29 00:01
-
-Contribution: 2018-03-29 00:02
-
-Contribution: 2018-03-29 00:03
-
-Contribution: 2018-03-29 00:04
-
-Contribution: 2018-03-30 00:00
-
-Contribution: 2018-03-30 00:01
-
-Contribution: 2018-03-30 00:02
-
-Contribution: 2018-03-30 00:03
-
-Contribution: 2018-04-04 00:00
-
-Contribution: 2018-04-04 00:01
-
-Contribution: 2018-04-04 00:02
-
-Contribution: 2018-04-04 00:03
-
-Contribution: 2018-04-04 00:04
-
-Contribution: 2018-04-04 00:05
-
-Contribution: 2018-04-04 00:06
-
-Contribution: 2018-04-04 00:07
-
-Contribution: 2018-04-05 00:00
-
-Contribution: 2018-04-05 00:01
-
-Contribution: 2018-04-05 00:02
-
-Contribution: 2018-04-05 00:03
-
-Contribution: 2018-04-05 00:04
-
-Contribution: 2018-04-05 00:05
-
-Contribution: 2018-04-09 00:00
-
-Contribution: 2018-04-09 00:01
-
-Contribution: 2018-04-09 00:02
-
-Contribution: 2018-04-09 00:03
-
-Contribution: 2018-04-09 00:04
-
-Contribution: 2018-04-09 00:05
-
-Contribution: 2018-04-09 00:06
-
-Contribution: 2018-04-09 00:07
-
-Contribution: 2018-04-09 00:08
-
-Contribution: 2018-04-09 00:09
-
-Contribution: 2018-04-10 00:00
-
-Contribution: 2018-04-11 00:00
-
-Contribution: 2018-04-11 00:01
-
-Contribution: 2018-04-11 00:02
-
-Contribution: 2018-04-11 00:03
-
-Contribution: 2018-04-12 00:00
-
-Contribution: 2018-04-12 00:01
-
-Contribution: 2018-04-12 00:02
-
-Contribution: 2018-04-12 00:03
-
-Contribution: 2018-04-12 00:04
-
-Contribution: 2018-04-13 00:00
-
-Contribution: 2018-04-13 00:01
-
-Contribution: 2018-04-13 00:02
-
-Contribution: 2018-04-20 00:00
-
-Contribution: 2018-04-20 00:01
-
-Contribution: 2018-04-20 00:02
-
-Contribution: 2018-04-20 00:03
-
-Contribution: 2018-04-23 00:00
-
-Contribution: 2018-04-23 00:01
-
-Contribution: 2018-04-23 00:02
-
-Contribution: 2018-04-23 00:03
-
-Contribution: 2018-04-23 00:04
-
-Contribution: 2018-04-23 00:05
-
-Contribution: 2018-04-23 00:06
-
-Contribution: 2018-04-23 00:07
-
-Contribution: 2018-04-25 00:00
-
-Contribution: 2018-04-25 00:01
-
-Contribution: 2018-04-25 00:02
-
-Contribution: 2018-04-25 00:03
-
-Contribution: 2018-04-25 00:04
-
-Contribution: 2018-05-01 00:00
-
-Contribution: 2018-05-01 00:01
-
-Contribution: 2018-05-01 00:02
-
-Contribution: 2018-05-01 00:03
-
-Contribution: 2018-05-01 00:04
-
-Contribution: 2018-05-01 00:05
-
-Contribution: 2018-05-01 00:06
-
-Contribution: 2018-05-02 00:00
-
-Contribution: 2018-05-02 00:01
-
-Contribution: 2018-05-02 00:02
-
-Contribution: 2018-05-03 00:00
-
-Contribution: 2018-05-03 00:01
-
-Contribution: 2018-05-08 00:00
-
-Contribution: 2018-05-08 00:01
-
-Contribution: 2018-05-08 00:02
-
-Contribution: 2018-05-08 00:03
-
-Contribution: 2018-05-08 00:04
-
-Contribution: 2018-05-08 00:05
-
-Contribution: 2018-05-08 00:06
-
-Contribution: 2018-05-08 00:07
-
-Contribution: 2018-05-08 00:08
-
-Contribution: 2018-05-08 00:09
-
-Contribution: 2018-05-09 00:00
-
-Contribution: 2018-05-10 00:00
-
-Contribution: 2018-05-11 00:00
-
-Contribution: 2018-05-11 00:01
-
-Contribution: 2018-05-11 00:02
-
-Contribution: 2018-05-11 00:03
-
-Contribution: 2018-05-11 00:04
-
-Contribution: 2018-05-15 00:00
-
-Contribution: 2018-05-15 00:01
-
-Contribution: 2018-05-15 00:02
-
-Contribution: 2018-05-15 00:03
-
-Contribution: 2018-05-15 00:04
-
-Contribution: 2018-05-15 00:05
-
-Contribution: 2018-05-17 00:00
-
-Contribution: 2018-05-21 00:00
-
-Contribution: 2018-05-21 00:01
-
-Contribution: 2018-05-21 00:02
-
-Contribution: 2018-05-21 00:03
-
-Contribution: 2018-05-21 00:04
-
-Contribution: 2018-05-22 00:00
-
-Contribution: 2018-05-22 00:01
-
-Contribution: 2018-05-22 00:02
-
-Contribution: 2018-05-22 00:03
-
-Contribution: 2018-05-22 00:04
-
+## Plans
